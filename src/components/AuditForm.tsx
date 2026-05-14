@@ -81,7 +81,7 @@ export function AuditForm({ onAudit, isLoading, isLoggedIn, onLogin }: AuditForm
           <Button 
             type="submit" 
             className="absolute right-1.5 h-11 px-6 rounded-md bg-primary text-primary-foreground font-bold transition-all active:scale-95 disabled:opacity-50"
-            disabled={isLoading || !isLoggedIn}
+            disabled={isLoading}
             onClick={(e) => {
               if (!isLoggedIn) {
                 e.preventDefault();

@@ -1,6 +1,6 @@
 {
-  "name": "AuditAI - Website Auditor",
-  "description": "Comprehensive AI auditor for Digital Infrastructure, Prestige Factor, and Global Compliance with ruthless analysis and expert reports.",
+  "name": "MadSiteAudit",
+  "description": "Ruthless AI website auditor for Digital Infrastructure, Prestige Factor, and Global Compliance. Get professional audits and strategic roadmaps.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

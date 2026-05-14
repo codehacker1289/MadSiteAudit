@@ -11,9 +11,10 @@ import { exportToPDF } from '@/src/services/pdfService';
 
 interface AuditReportViewProps {
   report: AuditReport;
+  onRepairClick?: () => void;
 }
 
-export function AuditReportView({ report }: AuditReportViewProps) {
+export function AuditReportView({ report, onRepairClick }: AuditReportViewProps) {
   const [isExporting, setIsExporting] = React.useState(false);
 
   const handleDownload = async () => {
@@ -37,6 +38,8 @@ export function AuditReportView({ report }: AuditReportViewProps) {
       case 'low': return <Badge variant="outline" className="bg-info/10 text-info border-info/20 text-[10px] uppercase font-black px-2 mt-1">Low Impact</Badge>;
     }
   };
+
+  const overallScore = report.overallScore || 0;
 
   return (
     <div className="w-full max-w-[1400px] mx-auto px-6 py-6 animate-in fade-in slide-in-from-top-2 duration-500">
@@ -80,12 +83,12 @@ export function AuditReportView({ report }: AuditReportViewProps) {
             <div className="relative flex items-center justify-center">
               <svg className="w-32 h-32 transform -rotate-90">
                 <circle
-                  cx="64"
-                  cy="64"
-                  r="60"
-                  fill="transparent"
-                  stroke="var(--border)"
-                  strokeWidth="8"
+                   cx="64"
+                   cy="64"
+                   r="60"
+                   fill="transparent"
+                   stroke="var(--border)"
+                   strokeWidth="8"
                 />
                 <circle
                   cx="64"
@@ -95,13 +98,13 @@ export function AuditReportView({ report }: AuditReportViewProps) {
                   stroke="currentColor"
                   strokeWidth="8"
                   strokeDasharray={377}
-                  strokeDashoffset={377 - (report.overallScore / 100) * 377}
-                  className={`${report.overallScore >= 90 ? 'text-emerald-500' : report.overallScore >= 70 ? 'text-blue-500' : 'text-rose-500'} transition-all duration-1000 ease-out`}
+                  strokeDashoffset={377 - (overallScore / 100) * 377}
+                  className={`${overallScore >= 90 ? 'text-emerald-500' : overallScore >= 70 ? 'text-blue-500' : 'text-rose-500'} transition-all duration-1000 ease-out`}
                   strokeLinecap="round"
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-4xl font-black text-foreground tracking-tighter leading-none">{report.overallScore}</span>
+                <span className="text-4xl font-black text-foreground tracking-tighter leading-none">{overallScore}</span>
               </div>
             </div>
           </div>
@@ -164,7 +167,10 @@ export function AuditReportView({ report }: AuditReportViewProps) {
             <p className="text-sm text-slate-300 leading-relaxed font-medium mb-4 relative z-10">
                {report.persuasiveCallToAction}
             </p>
-            <Button className="relative z-10 bg-info hover:bg-info/90 text-white border-none rounded-lg h-9 px-6 text-[10px] font-black uppercase tracking-widest">
+            <Button 
+              onClick={onRepairClick}
+              className="relative z-10 bg-info hover:bg-info/90 text-white border-none rounded-lg h-9 px-6 text-[10px] font-black uppercase tracking-widest"
+            >
               Repair My Digital Presence
             </Button>
           </div>

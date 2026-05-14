@@ -38,3 +38,21 @@ export async function getAuditHistory(maxResults: number = 5) {
     handleFirestoreError(error, OperationType.LIST, AUDITS_COLLECTION);
   }
 }
+
+export async function getAllAudits(maxResults: number = 100) {
+  try {
+    const q = query(
+      collection(db, AUDITS_COLLECTION),
+      orderBy("timestamp", "desc"),
+      limit(maxResults)
+    );
+
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      ...doc.data() as AuditReport,
+      id: doc.id
+    }));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, AUDITS_COLLECTION);
+  }
+}

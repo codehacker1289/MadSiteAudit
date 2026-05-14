@@ -15,12 +15,39 @@
         "userId": { "type": "string", "description": "Owner of the report" }
       },
       "required": ["url", "timestamp", "overallScore", "summary", "categories", "userId", "businessDomain", "persuasiveCallToAction"]
+    },
+    "User": {
+      "title": "User Profile",
+      "description": "Extended user data including roles and subscription info",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "admin"] },
+        "tier": { "type": "string", "enum": ["free", "specialist", "strategic_agent"] },
+        "auditQuota": { "type": "number" },
+        "auditsUsed": { "type": "number" },
+        "isBanned": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "role", "tier", "auditQuota", "auditsUsed"]
     }
   },
   "firestore": {
     "/audits/{auditId}": {
       "schema": "AuditReport",
       "description": "Collection of all website audits"
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles and settings"
+    },
+    "/tiers/{tierId}": {
+      "schema": "object",
+      "description": "Pricing tier configurations"
+    },
+    "/settings/{settingId}": {
+      "schema": "object",
+      "description": "Global system settings and merchant info"
     }
   }
 }

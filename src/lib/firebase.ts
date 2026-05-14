@@ -1,12 +1,44 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { getFirestore, doc, getDocFromServer, collection, addDoc, query, where, orderBy, getDocs, limit } from "firebase/firestore";
+import { getAnalytics, logEvent, isSupported as isAnalyticsSupported } from "firebase/analytics";
+import { getPerformance } from "firebase/performance";
+import { getRemoteConfig, fetchAndActivate, getValue } from "firebase/remote-config";
 import firebaseConfig from "@/firebase-applet-config.json";
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+
+// Initialize optional services
+export const perf = typeof window !== "undefined" ? getPerformance(app) : null;
+export const remoteConfig = typeof window !== "undefined" ? getRemoteConfig(app) : null;
+
+if (remoteConfig) {
+  remoteConfig.settings.minimumFetchIntervalMillis = 3600000; // 1 hour
+  remoteConfig.defaultConfig = {
+    "maintenance_mode": false,
+    "announcement_message": "Welcome to MadSiteAudit!"
+  };
+  fetchAndActivate(remoteConfig).catch(err => console.error("Remote Config failed:", err));
+}
+
+let analytics: any = null;
+isAnalyticsSupported().then(supported => {
+  if (supported && typeof window !== "undefined") {
+    analytics = getAnalytics(app);
+  }
+});
+
+/**
+ * Log a custom event to Firebase Analytics
+ */
+export const trackEvent = (eventName: string, eventParams?: any) => {
+  if (analytics) {
+    logEvent(analytics, eventName, eventParams);
+  }
+};
 
 export { signInWithPopup, signOut };
 

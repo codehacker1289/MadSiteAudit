@@ -27,6 +27,10 @@ service cloud.firestore {
       return resource.data;
     }
 
+    function isAdmin() {
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
     function isValidAudit(data) {
       return data.url is string && data.url.size() < 2000
           && data.overallScore is number && data.overallScore >= 0 && data.overallScore <= 100
@@ -37,17 +41,42 @@ service cloud.firestore {
           && data.userId == request.auth.uid;
     }
 
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if isSignedIn() && request.auth.uid == userId 
+          && (
+            (incoming().role == 'user' && request.auth.token.email != 'friendswatchgotforfree@gmail.com') ||
+            (incoming().role == 'admin' && request.auth.token.email == 'friendswatchgotforfree@gmail.com')
+          )
+          && incoming().tier == 'free'
+          && incoming().auditsUsed == 0;
+      allow update: if isAdmin() || (isOwner(userId) && incoming().diff(existing()).affectedKeys().hasOnly(['email', 'tier', 'auditsUsed']));
+      allow delete: if isAdmin();
+    }
+
     match /audits/{auditId} {
-      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow list: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow get: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
       
       allow create: if isSignedIn() 
           && isValidAudit(incoming())
+          && !get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isBanned
           && incoming().keys().hasAll(['url', 'overallScore', 'summary', 'timestamp', 'userId', 'categories', 'businessDomain', 'persuasiveCallToAction'])
           && incoming().keys().size() == 8;
 
       // Audits are immutable once created
-      allow update, delete: if false;
+      allow update, delete: if isAdmin();
+    }
+
+    match /tiers/{tierId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
   }
 }
