@@ -1,0 +1,26 @@
+{
+  "entities": {
+    "AuditReport": {
+      "title": "Audit Report",
+      "description": "Stored audit report for a website",
+      "type": "object",
+      "properties": {
+        "url": { "type": "string", "description": "Target website URL" },
+        "timestamp": { "type": "string", "format": "date-time", "description": "When the audit was performed" },
+        "overallScore": { "type": "number", "description": "Total health score" },
+        "summary": { "type": "string", "description": "Executive summary" },
+        "businessDomain": { "type": "string", "description": "Detected business domain" },
+        "persuasiveCallToAction": { "type": "string", "description": "Call to action text" },
+        "categories": { "type": "object" },
+        "userId": { "type": "string", "description": "Owner of the report" }
+      },
+      "required": ["url", "timestamp", "overallScore", "summary", "categories", "userId", "businessDomain", "persuasiveCallToAction"]
+    }
+  },
+  "firestore": {
+    "/audits/{auditId}": {
+      "schema": "AuditReport",
+      "description": "Collection of all website audits"
+    }
+  }
+}

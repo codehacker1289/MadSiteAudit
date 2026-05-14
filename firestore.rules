@@ -1,0 +1,53 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidAudit(data) {
+      return data.url is string && data.url.size() < 2000
+          && data.overallScore is number && data.overallScore >= 0 && data.overallScore <= 100
+          && data.summary is string && data.summary.size() < 10000
+          && data.businessDomain is string && data.businessDomain.size() < 500
+          && data.persuasiveCallToAction is string && data.persuasiveCallToAction.size() < 10000
+          && data.timestamp is string
+          && data.userId == request.auth.uid;
+    }
+
+    match /audits/{auditId} {
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      
+      allow create: if isSignedIn() 
+          && isValidAudit(incoming())
+          && incoming().keys().hasAll(['url', 'overallScore', 'summary', 'timestamp', 'userId', 'categories', 'businessDomain', 'persuasiveCallToAction'])
+          && incoming().keys().size() == 8;
+
+      // Audits are immutable once created
+      allow update, delete: if false;
+    }
+  }
+}
