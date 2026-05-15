@@ -1,7 +1,7 @@
 import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
-import { GoogleGenAI, SchemaType } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -13,7 +13,14 @@ async function startServer() {
   app.use(express.json());
 
   // Gemini Setup
-  const ai = new GoogleGenAI(process.env.GEMINI_API_KEY || "");
+  const ai = new GoogleGenAI({
+    apiKey: process.env.GEMINI_API_KEY || "",
+    httpOptions: {
+      headers: {
+        'User-Agent': 'aistudio-build',
+      }
+    }
+  });
 
   // API Route for Audit
   app.post("/api/audit", async (req, res) => {
@@ -23,72 +30,125 @@ async function startServer() {
         return res.status(400).json({ error: "URL is required" });
       }
 
-      const model = ai.getGenerativeModel({ 
-        model: "gemini-1.5-flash", // Using a stable model alias
-      });
-
-      const prompt = `Perform a high-stakes, ruthless website audit for the URL: ${url}.
+      const prompt = `Perform an ultra-elite, 360-degree digital intelligence audit for: ${url}.
       
-      Step 1: Identify the business domain (e.g., School, E-commerce, SaaS, Professional Services, etc.).
-      Step 2: Evaluate the website against these 5 specific categories of the "Digital Infrastructure Audit Checklist":
+      You are not just a tool; you are a High-Level Strategic Advisor. This report must be exceptionally detailed, long-form, and profound. 
       
-      Category 1: Vital Signs (Technical & Security)
-      - SSL Certificate, Mobile Responsiveness, Home Page Load Speed (target <3s), Internal Page Speed, Custom Domain, Favicon, Broken Links (404s), Browser Compatibility, SEO Title, Meta Description.
+      IMPORTANT: For every single audit point (finding), you MUST precisely identify:
+      1. THE WHAT: What is the issue? (title/description)
+      2. THE WHY: Why does this specific issue matter for their business? (whyItMatters)
+      3. THE WHERE: Where exactly on the site did you find this? (location)
+      4. THE HOW: How can we specifically fix this to improve the ROI? (fixStrategy)
       
-      Category 2: The "Prestige" Factor (Design & Branding)
-      - Logo Quality, Principal's/Founder's Photo, Message/Value Prop effectiveness, Color Consistency with brand, Font Readability, Navigation Menu organization, Hero Banner quality, Vision & Mission clarity, Recent Gallery/Infrastructure photos, Video/Campus tour.
+      COMPREHENSIVE AUDIT ARCHITECTURE:
       
-      Category 3: Communication Health (Content & Updates)
-      - News Ticker/Latest Updates, Academic/Operational Calendar (e.g., 2026-27), Holiday List, Working/School Timings, Staff/Team Directory with Qualifications, Uniform/Dress Code/Protocol instructions, Alumni/Success Stories, Awards & Recognition, Real User/Student work samples, Recent Events recap.
+      1. VITAL SIGNS (Infrastructure & Speed):
+         Deep-dive into SSL, load speed, mobile fluidity (FID, LCP, CLS), SEO architecture, and technical debt.
+         
+      2. PRESTIGE FACTOR (Brand & Ethos):
+         Analyze visual authority, font pairings, founder's presence, and the "Luxury Gap" in their branding.
+         
+      3. COMMUNICATION HEALTH (Relevance & Pulse):
+         Evaluate content rhythm, transparency of qualifications, and the depth of their digital archive.
+         
+      4. OPERATIONAL FRICTION (Growth Tools):
+         Test lead magnets, payment security signals, and the efficiency of the user journey.
+         
+      5. COMMUNITY & COMPLIANCE (Safety & Trust):
+         Review social proof density, legal shielding, and local SEO dominance.
       
-      Category 4: Operational Friction (Functional Tools)
-      - Online Admission/Booking Form, Transparent Fee/Pricing structure, Online Payment portals, Customer/Member Login area, Downloadable Syllabus/Brochures, Resource/Book lists, Circulars/Notices archive, Legal Verification/TC Search, Inquiry Lead forms, WhatsApp/Chat integration.
+      ELABORATE SECTIONS (MAXIMUM DETAIL):
       
-      Category 5: Community & Compliance (Safety & Search)
-      - Google Maps integration, Social Media links (FB/IG/YT), Live Social feeds, Board/Regulatory Affiliations, Mandatory Disclosures/Legal Docs, Safety/Compilance Certifications (Fire/Building/Child Safety), Safety Policies, Google Review health (10+ positive), SEO keyword ranking for "Best [Business Type] in [City]".
+      - SWOT MATRIX: Detailed Strengths, Weaknesses, Opportunities, and Threats (at least 4-5 items each).
+      - PSYCHOLOGICAL IMPRESSION: A paragraph on the "Instant Perception" a visitor has.
+      - INDUSTRY BENCHMARK: Explicit comparison to industry leaders. What are the "Gaps" they must close?
+      - CONVERSION FUNNEL: Identify where the users 'leak' out of the sales process.
+      - 12-MONTH REMEDIATION PLAN: Break down the fix into 3 logical phases (Immediate, Operational, Strategic).
       
-      LANGUAGE STYLE:
-      The report must use strong, professional, yet alarming language. You must make the owner realize the gravity of their digital negligence. Use a "Ruthless but Expert" tone. Explain WHY their current condition is failing them and HOW it is hurting their reputation/revenue.
+      TONE: Analytical, Sophisticated, High-Stakes. Use professional terminology like 'Friction Points', 'Cognitive Load', 'Authority Signaling', and 'ROI Leakage'.
       
-      CONCLUSION:
-      Include a persuasive "Call to Action" explaining why they MUST hire us (the audit platform/agency) to fix these issues and "make their digital presence great again".
-      
-      Format the response as a JSON object matching the provided schema.`;
+      Format as a JSON object matching the exhaustive schema provided.`;
 
       const categorySchema = {
-        type: SchemaType.OBJECT,
+        type: Type.OBJECT,
         properties: {
-          score: { type: SchemaType.NUMBER },
+          score: { type: Type.NUMBER },
           points: {
-            type: SchemaType.ARRAY,
+            type: Type.ARRAY,
             items: {
-              type: SchemaType.OBJECT,
+              type: Type.OBJECT,
               properties: {
-                title: { type: SchemaType.STRING },
-                description: { type: SchemaType.STRING },
-                impact: { type: SchemaType.STRING, enum: ["high", "medium", "low"] },
-                status: { type: SchemaType.STRING, enum: ["pass", "fail", "warning"] },
+                title: { type: Type.STRING },
+                description: { type: Type.STRING },
+                impact: { type: Type.STRING, enum: ["high", "medium", "low"] },
+                status: { type: Type.STRING, enum: ["fail", "pass", "warning"] },
+                whyItMatters: { type: Type.STRING },
+                location: { type: Type.STRING },
+                fixStrategy: { type: Type.STRING },
               },
-              required: ["title", "description", "impact", "status"],
+              required: ["title", "description", "impact", "status", "whyItMatters", "location", "fixStrategy"],
             },
           },
         },
         required: ["score", "points"],
       };
 
-      const result = await model.generateContent({
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-        generationConfig: {
+      console.log(`Starting audit for URL: ${url}`);
+      const result = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: prompt,
+        config: {
           responseMimeType: "application/json",
           responseSchema: {
-            type: SchemaType.OBJECT,
+            type: Type.OBJECT,
             properties: {
-              overallScore: { type: SchemaType.NUMBER },
-              businessDomain: { type: SchemaType.STRING },
-              summary: { type: SchemaType.STRING },
-              persuasiveCallToAction: { type: SchemaType.STRING },
+              overallScore: { type: Type.NUMBER },
+              businessDomain: { type: Type.STRING },
+              summary: { type: Type.STRING },
+              persuasiveCallToAction: { type: Type.STRING },
+              strategicVision: { type: Type.STRING },
+              psychologicalImpact: { type: Type.STRING },
+              riskLevel: { type: Type.STRING, enum: ["critical", "elevated", "stable"] },
+              industryBenchmark: {
+                type: Type.OBJECT,
+                properties: {
+                  score: { type: Type.NUMBER },
+                  description: { type: Type.STRING },
+                  competitorGaps: { type: Type.ARRAY, items: { type: Type.STRING } },
+                },
+                required: ["score", "description", "competitorGaps"],
+              },
+              conversionFunnel: {
+                type: Type.OBJECT,
+                properties: {
+                  status: { type: Type.STRING },
+                  leaks: { type: Type.ARRAY, items: { type: Type.STRING } },
+                },
+                required: ["status", "leaks"],
+              },
+              remediationPlan: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    phase: { type: Type.STRING },
+                    tasks: { type: Type.ARRAY, items: { type: Type.STRING } },
+                  },
+                  required: ["phase", "tasks"],
+                },
+              },
+              swotAnalysis: {
+                type: Type.OBJECT,
+                properties: {
+                  strengths: { type: Type.ARRAY, items: { type: Type.STRING } },
+                  weaknesses: { type: Type.ARRAY, items: { type: Type.STRING } },
+                  opportunities: { type: Type.ARRAY, items: { type: Type.STRING } },
+                  threats: { type: Type.ARRAY, items: { type: Type.STRING } },
+                },
+                required: ["strengths", "weaknesses", "opportunities", "threats"],
+              },
               categories: {
-                type: SchemaType.OBJECT,
+                type: Type.OBJECT,
                 properties: {
                   vitalSigns: categorySchema,
                   prestigeFactor: categorySchema,
@@ -99,16 +159,33 @@ async function startServer() {
                 required: ["vitalSigns", "prestigeFactor", "communicationHealth", "operationalFriction", "communityCompliance"],
               },
             },
-            required: ["overallScore", "summary", "categories", "businessDomain", "persuasiveCallToAction"],
+            required: [
+              "overallScore", "summary", "categories", "businessDomain", 
+              "persuasiveCallToAction", "strategicVision", "psychologicalImpact", 
+              "riskLevel", "swotAnalysis", "industryBenchmark", "conversionFunnel", "remediationPlan"
+            ],
           },
-        },
+        }
       });
 
-      const responseText = result.response.text();
-      res.json(JSON.parse(responseText));
+      const responseText = result.text;
+      if (!responseText) {
+        throw new Error("No response from Gemini");
+      }
+      
+      try {
+        const parsed = JSON.parse(responseText);
+        res.json(parsed);
+      } catch (parseError) {
+        console.error("JSON Parse Error. Raw Response:", responseText);
+        throw new Error("The AI provided an invalid data structure. Please try again.");
+      }
     } catch (error: any) {
-      console.error("Audit error:", error);
-      res.status(500).json({ error: error.message });
+      console.error("Audit error details:", error);
+      res.status(500).json({ 
+        error: error.message || "Unknown audit engine error",
+        details: error.response?.data || error.stack 
+      });
     }
   });
 

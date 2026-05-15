@@ -32,6 +32,8 @@ export default function App() {
   const [view, setView] = useState<View>("dashboard");
   const [announcement, setAnnouncement] = useState<string>("");
 
+  const isAdmin = userProfile?.role === 'admin' || user?.email === 'friendswatchgotforfree@gmail.com';
+
   useEffect(() => {
     if (remoteConfig) {
       const msg = getValue(remoteConfig, "announcement_message").asString();
@@ -129,7 +131,7 @@ export default function App() {
       return;
     }
 
-    if (userProfile.auditsUsed >= userProfile.auditQuota && userProfile.role !== 'admin') {
+    if (userProfile.auditsUsed >= userProfile.auditQuota && !isAdmin) {
       setError("Audit quota exceeded. Please upgrade your tier.");
       setView("billing");
       return;
@@ -144,16 +146,24 @@ export default function App() {
     setError(null);
     trackEvent('audit_started', { url, user_id: user.uid });
     try {
-      const result = await performAudit(url);
+      const result = await performAudit(url, user.displayName || 'Anonymous Operative', user.email || '');
       setReport(result);
       await saveAudit(result);
       await incrementAuditsUsed(user.uid);
       await fetchHistory();
       await fetchProfile(user);
       trackEvent('audit_completed', { url, score: result.overallScore });
-    } catch (err) {
-      console.error(err);
-      setError('Failed to perform audit. Please check the URL and try again.');
+    } catch (err: any) {
+      console.error('Audit Engine Failure:', err);
+      const serverError = err.response?.data?.error;
+      const details = err.response?.data?.details;
+      
+      if (serverError) {
+        setError(`Audit Error: ${serverError}`);
+        console.error('Server Details:', details);
+      } else {
+        setError('Failed to perform audit. The Madrocket engine encountered an anomaly.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -202,7 +212,7 @@ export default function App() {
               active={view === "billing"} 
               onClick={() => { setView("billing"); setReport(null); }} 
             />
-            {userProfile?.role === 'admin' && (
+            {isAdmin && (
               <div className="pt-4 space-y-1">
                 <p className="px-3 text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground/50 mb-2">Command Center</p>
                 <SidebarLink 
@@ -256,9 +266,12 @@ export default function App() {
                 {userProfile?.auditsUsed || 0} / {userProfile?.auditQuota === -1 ? '∞' : userProfile?.auditQuota || 0} Extractions
               </p>
               
-              <button onClick={handleLogout} className="focus:outline-none flex items-center gap-1.5 text-[9px] font-bold text-destructive hover:opacity-80 transition-opacity uppercase tracking-widest pt-3 w-full">
-                <LogOut className="w-3 h-3" />
-                Sign Out
+              <button 
+                onClick={handleLogout} 
+                className="mt-2 flex items-center justify-center gap-2 w-full py-2 bg-destructive/10 hover:bg-destructive/20 text-destructive rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all active:scale-[0.98]"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                Logout
               </button>
             </div>
           ) : (

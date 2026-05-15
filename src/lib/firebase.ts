@@ -12,16 +12,29 @@ export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
 // Initialize optional services
-export const perf = typeof window !== "undefined" ? getPerformance(app) : null;
-export const remoteConfig = typeof window !== "undefined" ? getRemoteConfig(app) : null;
+export let perf: any = null;
+export let remoteConfig: any = null;
 
-if (remoteConfig) {
-  remoteConfig.settings.minimumFetchIntervalMillis = 3600000; // 1 hour
-  remoteConfig.defaultConfig = {
-    "maintenance_mode": false,
-    "announcement_message": "Welcome to MadSiteAudit!"
-  };
-  fetchAndActivate(remoteConfig).catch(err => console.error("Remote Config failed:", err));
+try {
+  if (typeof window !== "undefined") {
+    perf = getPerformance(app);
+  }
+} catch (err) {
+  console.warn("Firebase Performance is not available in this environment.");
+}
+
+try {
+  if (typeof window !== "undefined") {
+    remoteConfig = getRemoteConfig(app);
+    remoteConfig.settings.minimumFetchIntervalMillis = 3600000; // 1 hour
+    remoteConfig.defaultConfig = {
+      "maintenance_mode": false,
+      "announcement_message": "Welcome to MadSiteAudit!"
+    };
+    fetchAndActivate(remoteConfig).catch(err => console.error("Remote Config failed:", err));
+  }
+} catch (err) {
+  console.warn("Firebase Remote Config is not available in this environment.");
 }
 
 let analytics: any = null;

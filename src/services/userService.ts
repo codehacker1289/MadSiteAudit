@@ -19,7 +19,13 @@ export async function getOrCreateProfile(uid: string, email: string): Promise<Us
   const snapshot = await getDoc(userDoc);
 
   if (snapshot.exists()) {
-    return { uid, ...snapshot.data() } as UserProfile;
+    const data = snapshot.data();
+    // Self-heal: Ensure admin emails always have the admin role in the DB
+    if (ADMIN_EMAILS.includes(email) && data.role !== 'admin') {
+      await updateDoc(userDoc, { role: 'admin' });
+      return { uid, ...data, role: 'admin' } as UserProfile;
+    }
+    return { uid, ...data } as UserProfile;
   }
 
   // Create new profile

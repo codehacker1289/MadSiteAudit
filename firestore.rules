@@ -11,6 +11,10 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
@@ -27,8 +31,13 @@ service cloud.firestore {
       return resource.data;
     }
 
+    // Hardcoded primary admin to prevent recursion and bootstrap the system
+    function isPrimaryAdmin() {
+      return isSignedIn() && request.auth.token.email == 'friendswatchgotforfree@gmail.com' && request.auth.token.email_verified == true;
+    }
+
     function isAdmin() {
-      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      return isPrimaryAdmin() || (isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
     }
 
     function isValidAudit(data) {
@@ -42,7 +51,7 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow get: if isOwner(userId) || isAdmin();
+      allow get: if isOwner(userId) || isPrimaryAdmin() || (isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
       allow list: if isAdmin();
       allow create: if isSignedIn() && request.auth.uid == userId 
           && (
@@ -51,15 +60,14 @@ service cloud.firestore {
           )
           && incoming().tier == 'free'
           && incoming().auditsUsed == 0;
-      allow update: if isAdmin() || (isOwner(userId) && incoming().diff(existing()).affectedKeys().hasOnly(['email', 'tier', 'auditsUsed']));
+      allow update: if isAdmin() || (isOwner(userId) && incoming().diff(existing()).affectedKeys().hasOnly(['email', 'tier', 'auditsUsed', 'auditQuota']));
       allow delete: if isAdmin();
     }
 
     match /audits/{auditId} {
-      allow list: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
-      allow get: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
       
-      allow create: if isSignedIn() 
+      allow create: if isVerified() 
           && isValidAudit(incoming())
           && !get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isBanned
           && incoming().keys().hasAll(['url', 'overallScore', 'summary', 'timestamp', 'userId', 'categories', 'businessDomain', 'persuasiveCallToAction'])

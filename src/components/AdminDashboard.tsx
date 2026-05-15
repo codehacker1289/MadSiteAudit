@@ -109,7 +109,7 @@ export function AdminDashboard({ tab = 'operatives' }: { tab?: string }) {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <StatsCard icon={Users} label="Total Users" value={users.length} color="text-blue-500" />
               <StatsCard icon={Zap} label="Total Extractions" value={totalAudits} color="text-amber-500" />
-              <StatsCard icon={IndianRupee} label="Monthly Revenue" value={`Rs. ${estimatedRevenue}`} color="text-emerald-500" />
+              <StatsCard icon={IndianRupee} label="Monthly Revenue" value={estimatedRevenue} color="text-emerald-500" isCurrency={true} />
               <StatsCard icon={ShieldAlert} label="Paid Assets" value={paidUsers} color="text-purple-500" />
             </div>
 
@@ -302,7 +302,7 @@ export function AdminDashboard({ tab = 'operatives' }: { tab?: string }) {
   );
 }
 
-function StatsCard({ icon: Icon, label, value, color }: any) {
+function StatsCard({ icon: Icon, label, value, color, isCurrency }: any) {
   return (
     <Card className="shadow-none border-border bg-card/50 overflow-hidden group">
       <CardContent className="p-6 relative">
@@ -311,7 +311,10 @@ function StatsCard({ icon: Icon, label, value, color }: any) {
         </div>
         <Icon className={`w-4 h-4 mb-3 ${color}`} />
         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{label}</p>
-        <p className="text-2xl font-black mt-1 tracking-tight">{value}</p>
+        <div className="flex items-center gap-1 mt-1">
+          {isCurrency && <IndianRupee className="w-4 h-4" />}
+          <p className="text-2xl font-black tracking-tight">{value}</p>
+        </div>
       </CardContent>
     </Card>
   );

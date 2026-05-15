@@ -3,7 +3,7 @@ import { UserProfile, updateUserTier, getTiers, PricingTier, SystemSettings, get
 import { Button } from './ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from './ui/card';
 import { Badge } from './ui/badge';
-import { Check, Zap, Rocket, ShieldCheck, CreditCard, LogIn, ChevronRight, QrCode, Settings, Save } from 'lucide-react';
+import { Check, Zap, Rocket, ShieldCheck, CreditCard, LogIn, ChevronRight, QrCode, Settings, Save, IndianRupee } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { auth, googleProvider, signInWithPopup, trackEvent } from '../lib/firebase';
 import { Slider } from './ui/slider';
@@ -166,8 +166,9 @@ export function BillingView({ userProfile, onRefresh }: BillingViewProps) {
               </CardHeader>
               <CardContent className="flex-1 space-y-6">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-black tracking-tighter">
-                    {isStrategic ? `Rs. ${strategicPrice}` : tier.price}
+                  <span className="flex items-center text-4xl font-black tracking-tighter">
+                    <IndianRupee className="w-8 h-8 mr-1 text-primary/50" />
+                    {isStrategic ? strategicPrice : tier.price.replace(/[^0-9]/g, '')}
                   </span>
                   <span className="text-muted-foreground text-xs font-bold uppercase tracking-widest">/ Month</span>
                 </div>
@@ -242,7 +243,10 @@ export function BillingView({ userProfile, onRefresh }: BillingViewProps) {
             
             <div className="text-center space-y-1">
               <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Amount Required</p>
-              <p className="text-3xl font-black font-mono">Rs. {paymentModal?.amount}</p>
+              <div className="flex items-center justify-center text-3xl font-black font-mono">
+                <IndianRupee className="w-6 h-6 mr-1" />
+                {paymentModal?.amount}
+              </div>
             </div>
 
             <div className="w-full bg-muted/30 p-4 rounded-xl border border-border space-y-2">
