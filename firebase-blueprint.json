@@ -1,53 +1,80 @@
 {
   "entities": {
-    "AuditReport": {
-      "title": "Audit Report",
-      "description": "Stored audit report for a website",
-      "type": "object",
-      "properties": {
-        "url": { "type": "string", "description": "Target website URL" },
-        "timestamp": { "type": "string", "format": "date-time", "description": "When the audit was performed" },
-        "overallScore": { "type": "number", "description": "Total health score" },
-        "summary": { "type": "string", "description": "Executive summary" },
-        "businessDomain": { "type": "string", "description": "Detected business domain" },
-        "persuasiveCallToAction": { "type": "string", "description": "Call to action text" },
-        "categories": { "type": "object" },
-        "userId": { "type": "string", "description": "Owner of the report" }
-      },
-      "required": ["url", "timestamp", "overallScore", "summary", "categories", "userId", "businessDomain", "persuasiveCallToAction"]
-    },
     "User": {
       "title": "User Profile",
-      "description": "Extended user data including roles and subscription info",
+      "description": "User authentication and subscription data",
       "type": "object",
       "properties": {
         "email": { "type": "string" },
         "role": { "type": "string", "enum": ["user", "admin"] },
         "tier": { "type": "string", "enum": ["free", "specialist", "strategic_agent"] },
-        "auditQuota": { "type": "number" },
-        "auditsUsed": { "type": "number" },
+        "auditQuota": { "type": "integer" },
+        "auditsUsed": { "type": "integer" },
         "isBanned": { "type": "boolean" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["email", "role", "tier", "auditQuota", "auditsUsed"]
+      "required": ["email", "role", "tier", "auditQuota", "auditsUsed", "createdAt"]
+    },
+    "Audit": {
+      "title": "Audit Report",
+      "description": "Generated strategic audit report",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "overallScore": { "type": "integer" },
+        "url": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "businessDomain": { "type": "string" },
+        "summary": { "type": "string" },
+        "persuasiveCallToAction": { "type": "string" },
+        "strategicVision": { "type": "string" },
+        "psychologicalImpact": { "type": "string" },
+        "riskLevel": { "type": "string", "enum": ["critical", "elevated", "stable"] },
+        "generatedBy": { "type": "string" },
+        "userEmail": { "type": "string" }
+      },
+      "required": ["userId", "overallScore", "url", "timestamp"]
+    },
+    "PricingTier": {
+      "title": "Pricing Tier",
+      "description": "Subscription tier configuration",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "price": { "type": "string" },
+        "description": { "type": "string" },
+        "quota": { "type": "integer" },
+        "features": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["name", "price", "description", "quota"]
+    },
+    "Settings": {
+      "title": "System Settings",
+      "description": "Global administrative settings",
+      "type": "object",
+      "properties": {
+        "googlePayId": { "type": "string" },
+        "merchantName": { "type": "string" }
+      },
+      "required": ["googlePayId", "merchantName"]
     }
   },
   "firestore": {
-    "/audits/{auditId}": {
-      "schema": "AuditReport",
-      "description": "Collection of all website audits"
-    },
-    "/users/{userId}": {
+    "users/{userId}": {
       "schema": "User",
-      "description": "User profiles and settings"
+      "description": "Profiles for all users"
     },
-    "/tiers/{tierId}": {
-      "schema": "object",
-      "description": "Pricing tier configurations"
+    "audits/{auditId}": {
+      "schema": "Audit",
+      "description": "All generated audit reports"
     },
-    "/settings/{settingId}": {
-      "schema": "object",
-      "description": "Global system settings and merchant info"
+    "tiers/{tierId}": {
+      "schema": "PricingTier",
+      "description": "Available subscription tiers"
+    },
+    "settings/admin": {
+      "schema": "Settings",
+      "description": "Global admin configuration"
     }
   }
 }

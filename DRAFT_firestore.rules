@@ -1,0 +1,94 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // -------------------------------------------------------------------------
+    // GLOBAL HELPERS
+    // -------------------------------------------------------------------------
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function docData(path) { return get(path).data; }
+    function isAdmin() { 
+      return isSignedIn() && 
+      exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+      get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'; 
+    }
+    
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    // -------------------------------------------------------------------------
+    // VALIDATION HELPERS
+    // -------------------------------------------------------------------------
+    function isValidUser(data) {
+      return data.email is string && data.email.size() <= 256 &&
+             data.role in ['user', 'admin'] &&
+             data.tier in ['free', 'specialist', 'strategic_agent'] &&
+             data.auditQuota is int &&
+             data.auditsUsed is int &&
+             data.createdAt is string;
+    }
+
+    function isValidAudit(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.overallScore is int && data.overallScore >= 0 && data.overallScore <= 100 &&
+             data.url is string && data.url.size() <= 2048 &&
+             data.timestamp is string;
+    }
+
+    // -------------------------------------------------------------------------
+    // CATCH-ALL DENY
+    // -------------------------------------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // -------------------------------------------------------------------------
+    // COLLECTIONS
+    // -------------------------------------------------------------------------
+
+    // USERS COLLECTION
+    match /users/{userId} {
+      // User can read their own profile, admin can read all
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+      
+      // Initial creation
+      allow create: if isOwner(userId) && isValidUser(incoming()) && 
+                    incoming().role == 'user' && incoming().tier == 'free'; // Force standard role/tier
+      
+      // Profile updates
+      allow update: if (isOwner(userId) && 
+                      incoming().diff(existing()).affectedKeys().hasOnly(['auditsUsed', 'email']) &&
+                      isValidUser(incoming())) ||
+                    isAdmin();
+      
+      allow delete: if isAdmin();
+    }
+
+    // AUDITS COLLECTION
+    match /audits/{auditId} {
+      // User can read their own audits, admin can read all
+      allow get: if (isSignedIn() && existing().userId == request.auth.uid) || isAdmin();
+      allow list: if (isSignedIn() && resource.data.userId == request.auth.uid) || isAdmin();
+      
+      // Creation
+      allow create: if isSignedIn() && isValidAudit(incoming());
+      
+      // Updates usually not allowed for audits once generated, unless by admin
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // TIERS COLLECTION
+    match /tiers/{tierId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // SETTINGS COLLECTION
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

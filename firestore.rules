@@ -41,13 +41,16 @@ service cloud.firestore {
     }
 
     function isValidAudit(data) {
-      return data.url is string && data.url.size() < 2000
+      return data.url is string && data.url.size() < 2048
           && data.overallScore is number && data.overallScore >= 0 && data.overallScore <= 100
-          && data.summary is string && data.summary.size() < 10000
-          && data.businessDomain is string && data.businessDomain.size() < 500
-          && data.persuasiveCallToAction is string && data.persuasiveCallToAction.size() < 10000
+          && data.summary is string && data.summary.size() < 15000
+          && data.businessDomain is string && data.businessDomain.size() < 1000
+          && data.persuasiveCallToAction is string && data.persuasiveCallToAction.size() < 15000
           && data.timestamp is string
-          && data.userId == request.auth.uid;
+          && data.userId == request.auth.uid
+          && data.generatedBy is string
+          && data.userEmail is string
+          && data.riskLevel in ['critical', 'elevated', 'stable'];
     }
 
     match /users/{userId} {
@@ -70,8 +73,8 @@ service cloud.firestore {
       allow create: if isVerified() 
           && isValidAudit(incoming())
           && !get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isBanned
-          && incoming().keys().hasAll(['url', 'overallScore', 'summary', 'timestamp', 'userId', 'categories', 'businessDomain', 'persuasiveCallToAction'])
-          && incoming().keys().size() == 8;
+          && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.auditQuota > get(/databases/$(database)/documents/users/$(request.auth.uid)).data.auditsUsed 
+              || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.auditQuota == -1);
 
       // Audits are immutable once created
       allow update, delete: if isAdmin();
