@@ -57,6 +57,7 @@ export interface PricingTier {
 export interface SystemSettings {
   googlePayId: string;
   merchantName: string;
+  geminiApiKey?: string;
 }
 
 const DEFAULT_TIERS: PricingTier[] = [

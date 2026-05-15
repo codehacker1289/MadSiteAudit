@@ -1,4 +1,6 @@
 import axios from "axios";
+import { runClientAudit } from "./geminiClientService";
+import { getAdminSettings } from "./dbService";
 
 export interface AuditReport {
   overallScore: number;
@@ -56,10 +58,22 @@ export interface AuditPoint {
 }
 
 export async function performAudit(url: string, userName: string, userEmail: string): Promise<AuditReport> {
-  const response = await axios.post("/api/audit", { url });
+  const settings = await getAdminSettings();
+  const firestoreApiKey = settings?.geminiApiKey;
+  const clientApiKey = firestoreApiKey || import.meta.env.VITE_GEMINI_API_KEY;
+  
+  let data;
+  if (clientApiKey && clientApiKey !== "MY_GEMINI_API_KEY_FOR_CLIENT") {
+    // Client-side execution (Free Firebase Spark plan path)
+    data = await runClientAudit(url, clientApiKey);
+  } else {
+    // Server-side execution (Standard platform path)
+    const response = await axios.post("/api/audit", { url });
+    data = response.data;
+  }
   
   return {
-    ...response.data,
+    ...data,
     url,
     timestamp: new Date().toISOString(),
     generatedBy: userName,

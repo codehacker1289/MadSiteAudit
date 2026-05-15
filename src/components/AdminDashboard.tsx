@@ -263,7 +263,7 @@ export function AdminDashboard({ tab = 'operatives' }: { tab?: string }) {
         {tab === "payout" && (
           <Card className="shadow-none border-border bg-card/50">
             <CardHeader>
-              <CardTitle className="text-sm font-bold uppercase tracking-widest">Payout Infrastructure Configuration</CardTitle>
+              <CardTitle className="text-sm font-bold uppercase tracking-widest">System Configuration & Security</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -287,11 +287,22 @@ export function AdminDashboard({ tab = 'operatives' }: { tab?: string }) {
                     placeholder="e.g. Madrocket Operations"
                   />
                 </div>
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Gemini API Key (For Browser-Side Audits)</label>
+                  <input 
+                    type="password" 
+                    value={settings.geminiApiKey || ''}
+                    onChange={(e) => setSettings({...settings, geminiApiKey: e.target.value})}
+                    className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-primary h-10"
+                    placeholder="Enter Gemini API Key"
+                  />
+                  <p className="text-[9px] text-muted-foreground">This key will be used for web-client based audits to bypass Firebase Blaze requirements.</p>
+                </div>
               </div>
               <div className="pt-4 border-t border-border flex justify-end">
                 <Button onClick={handleSaveSettings} className="h-10 px-8 font-black uppercase tracking-widest text-[10px]">
                   <Save className="w-3.5 h-3.5 mr-2" />
-                  Secure Payout Pipeline
+                  Secure System State
                 </Button>
               </div>
             </CardContent>

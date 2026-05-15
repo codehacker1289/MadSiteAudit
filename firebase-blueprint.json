@@ -54,7 +54,8 @@
       "type": "object",
       "properties": {
         "googlePayId": { "type": "string" },
-        "merchantName": { "type": "string" }
+        "merchantName": { "type": "string" },
+        "geminiApiKey": { "type": "string" }
       },
       "required": ["googlePayId", "merchantName"]
     }
