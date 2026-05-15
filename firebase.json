@@ -12,5 +12,14 @@
         "destination": "/index.html"
       }
     ]
+  },
+  "firestore": {
+    "database": "ai-studio-5525dc0d-c979-47fb-acda-9cc2921dd98b",
+    "location": "asia-south1",
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "auth": {
+    "providers": {}
   }
 }
